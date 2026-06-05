@@ -60,6 +60,16 @@ def init_db():
         )
     """)
     conn.execute("""
+        CREATE TABLE IF NOT EXISTS coin_info (
+            token        TEXT PRIMARY KEY,
+            market_cap   REAL,
+            rank         INTEGER,
+            categories   TEXT,
+            name         TEXT,
+            timestamp    TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS fundamental_scores (
             pair       TEXT PRIMARY KEY,
             score      REAL NOT NULL,
@@ -360,23 +370,75 @@ def save_fundamental_to_db(pair, score, resumen):
         print(f"Error saving fundamental to DB: {e}")
 
 
+# Estado del rate limit de CoinGecko
+_cg_rate_limited_until = {"ts": 0}
+
+def _save_coin_info_db(token, result):
+    """Persiste market cap / rank / categoría en BD para sobrevivir reinicios."""
+    from datetime import datetime
+    try:
+        with db_lock:
+            conn = sqlite3.connect(DB_PATH, timeout=10)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("""INSERT OR REPLACE INTO coin_info
+                (token, market_cap, rank, categories, name, timestamp)
+                VALUES (?,?,?,?,?,?)""",
+                (token, result.get("market_cap_usd"), result.get("rank"),
+                 ",".join(result.get("categories",[])), result.get("name",token),
+                 datetime.utcnow().isoformat()))
+            conn.commit()
+            conn.close()
+    except Exception as e:
+        print(f"Error guardando coin_info: {e}")
+
+def _load_coin_info_db(token, max_age_days=7):
+    """Carga datos básicos de la BD si son recientes (market cap no cambia bruscamente)."""
+    from datetime import datetime, timedelta
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=5)
+        row = conn.execute("SELECT market_cap, rank, categories, name, timestamp FROM coin_info WHERE token=?", (token,)).fetchone()
+        conn.close()
+        if row:
+            ts = datetime.fromisoformat(row[4])
+            if datetime.utcnow() - ts < timedelta(days=max_age_days):
+                return {"market_cap_usd": row[0], "rank": row[1],
+                        "categories": row[2].split(",") if row[2] else [],
+                        "name": row[3] or token, "_from_db": True}
+    except Exception:
+        pass
+    return None
+
 def get_coingecko_full(pair):
-    """Obtiene datos completos de CoinGecko para el agente fundamental."""
+    """Datos completos de CoinGecko. Usa caché memoria (1h) + BD (7d) + detecta rate limit."""
     import time as _time
     token = pair.split("/")[0] if "/" in pair else pair
     for s in [".S",".P",".M","2"]: token = token.replace(s,"")
     cache_key = f"cg_full_{token}"
     now = _time.time()
+    # 1. Caché en memoria (1h, datos completos)
     if cache_key in _cg_cache and now - _cg_cache_time.get(cache_key,0) < 3600:
         return _cg_cache[cache_key]
+    # 2. Si CoinGecko está rate-limited, usar lo que haya en BD (aunque sea parcial)
+    if now < _cg_rate_limited_until["ts"]:
+        db_info = _load_coin_info_db(token)
+        if db_info:
+            return db_info
+        return {}
     try:
         cg_id = get_coingecko_id(token)
         url = (f"https://api.coingecko.com/api/v3/coins/{cg_id}"
                f"?localization=false&tickers=false&market_data=true"
                f"&community_data=false&developer_data=false")
         r = requests.get(url, timeout=8)
+        if r.status_code == 429:
+            # Rate limit: pausar llamadas 2 min y tirar de BD
+            _cg_rate_limited_until["ts"] = now + 120
+            print("⚠ CoinGecko rate limit (429) — usando BD durante 2 min")
+            db_info = _load_coin_info_db(token)
+            return db_info or {}
         if r.status_code != 200:
-            return {}
+            db_info = _load_coin_info_db(token)
+            return db_info or {}
         d = r.json()
         md = d.get("market_data", {})
         result = {
@@ -399,10 +461,12 @@ def get_coingecko_full(pair):
         }
         _cg_cache[cache_key] = result
         _cg_cache_time[cache_key] = now
+        _save_coin_info_db(token, result)  # persistir en BD (7 días)
         return result
     except Exception as e:
         print(f"CoinGecko full error {pair}: {e}")
-        return {}
+        db_info = _load_coin_info_db(token)
+        return db_info or {}
 
 
 def ai_fundamental_score(pair, ticker, change_7d):
@@ -2129,6 +2193,10 @@ _last_price = {}         # symbol -> ultimo precio visto
 # ─── Filtros de detección de ballena ───
 BALLENA_MIN_USD = 15000   # operación individual mínima (USD)
 BALLENA_MIN_PCT = 1.0     # movimiento mínimo del precio en la ventana (%)
+# Filtro small/mid cap: la "zona dulce" con recorrido pero sin ser scam ni gigante
+MCAP_MIN = 30_000_000      # 30M$ — por debajo es micro cap de altísimo riesgo
+MCAP_MAX = 3_000_000_000   # 3.000M$ — por encima son grandes sin recorrido x10
+FILTRAR_POR_MCAP = True    # si no hay dato de market cap, dejar pasar la señal
 _PRICE_WINDOW_MS = 5 * 60 * 1000  # ventana de 5 min para medir el movimiento
 _price_history = {}        # symbol -> list of (ts_ms, precio)
 
@@ -2175,9 +2243,29 @@ def procesar_trade(symbol, precio, cantidad, es_venta, ts_ms):
         if vol_24h < 50000:
             print(f"⏭ [BINANCE] {pair} omitido — vol 24h {vol_24h:,.0f}$ < 50K$")
             return
+        # Filtro small/mid cap — buscamos proyectos con recorrido (tipo VVV/HYPE pre-subida)
+        mcap_verificado = True
+        mcap = None
+        if FILTRAR_POR_MCAP:
+            cg = get_coingecko_full(pair)
+            mcap = (cg or {}).get("market_cap_usd")
+            if mcap:  # tenemos el dato → aplicar filtro
+                if mcap < MCAP_MIN:
+                    print(f"⏭ [BINANCE] {pair} omitido — mcap {mcap/1e6:.0f}M$ < {MCAP_MIN/1e6:.0f}M$ (micro cap)")
+                    return
+                if mcap > MCAP_MAX:
+                    print(f"⏭ [BINANCE] {pair} omitido — mcap {mcap/1e9:.1f}B$ > {MCAP_MAX/1e9:.0f}B$ (large cap)")
+                    return
+                print(f"✅ [BINANCE] {pair} en zona small/mid cap: {mcap/1e6:.0f}M$")
+            else:
+                # No hay dato de market cap — dejamos pasar pero lo marcamos
+                mcap_verificado = False
+                print(f"⚠ [BINANCE] {pair} — market cap NO verificado (CoinGecko sin dato), señal enviada igualmente")
         _tok = pair.split("/")[0]
         c7d = _cg_cache.get("7d_" + _tok)
         TGmsg = createTGmessage(tradeDF, pair, volInEUR, priceDiff, {}, {}, ticker, c7d, None)
+        if not mcap_verificado:
+            TGmsg += "\n⚠️ _Market cap no verificado_"
         tg_response = telegram_bot_sendtext(TGmsg)
         msg_id = tg_response.get("result", {}).get("message_id")
 
