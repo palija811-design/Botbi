@@ -1097,33 +1097,35 @@ HTML = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Whale Dashboard - Binance</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-:root{--bg:#080c14;--surface:#0d1420;--border:#1a2535;--accent:#00d4ff;--green:#00ff88;--red:#ff4466;--orange:#ffaa00;--text:#c8d8e8;--muted:#4a6080}
+:root{--bg:#0b0e11;--surface:#181a20;--surface2:#1e2329;--border:#2b3139;--accent:#fcd535;--accent-dim:#f0b90b;--green:#0ecb81;--red:#f6465d;--orange:#f0b90b;--text:#eaecef;--muted:#848e9c}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:"Space Mono",monospace;min-height:100vh}
-header{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem}
-header h1{font-family:"Syne",sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent)}
+body{background:var(--bg);background-image:radial-gradient(circle at 15% -5%,rgba(252,213,53,0.06),transparent 40%),radial-gradient(circle at 90% 0%,rgba(240,185,11,0.04),transparent 35%);color:var(--text);font-family:"IBM Plex Mono",monospace;min-height:100vh}
+header{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;background:linear-gradient(180deg,rgba(252,213,53,0.04),transparent);position:relative}
+header h1{font-family:"Sora",sans-serif;font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,#fcd535,#f0b90b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0.6rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border)}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem;transition:border-color 0.2s}
+.stat:hover{border-color:var(--accent-dim)}
 .stat-label{font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
-.stat-value{font-size:1.3rem;font-weight:700;font-family:"Syne",sans-serif;color:var(--accent);margin-top:0.1rem}
+.stat-value{font-size:1.3rem;font-weight:700;font-family:"Sora",sans-serif;color:var(--accent);margin-top:0.1rem}
 .chip-wrap{display:flex;flex-wrap:wrap;gap:0.3rem;padding:0.6rem 1.5rem;border-bottom:1px solid var(--border)}
 .chip{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.15rem 0.45rem;font-size:0.65rem;cursor:pointer;transition:all 0.15s}
 .chip:hover{border-color:var(--accent);color:var(--accent)}
 .tabs{display:flex;border-bottom:1px solid var(--border);padding:0 1.5rem;overflow-x:auto}
 .tab{padding:0.65rem 1.2rem;cursor:pointer;font-size:0.72rem;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 8px rgba(252,213,53,0.4)}
 .tab-content{display:none}.tab-content.active{display:block}
-input,select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:0.38rem 0.6rem;border-radius:6px;font-family:"Space Mono",monospace;font-size:0.72rem;outline:none}
+input,select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:0.38rem 0.6rem;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:0.72rem;outline:none}
 input:focus,select:focus{border-color:var(--accent)}
-button{background:var(--accent);color:#000;border:none;padding:0.38rem 0.85rem;border-radius:6px;font-family:"Syne",sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;transition:opacity 0.2s}
+button{background:var(--accent);color:#0b0e11;border:none;padding:0.4rem 0.9rem;border-radius:6px;font-family:"Sora",sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;transition:all 0.2s}
+button:hover{background:var(--accent-dim);box-shadow:0 0 16px rgba(252,213,53,0.35)}
 button:hover{opacity:0.8}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:0.65rem}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent);opacity:1}
-.btn-export{background:#1a3050;color:var(--accent);border:1px solid #1a4060}
-.btn-sm{background:transparent;border:1px solid var(--muted);color:var(--muted);padding:0.1rem 0.4rem;border-radius:4px;font-size:0.6rem;cursor:pointer;font-family:"Space Mono",monospace}
+.btn-export{background:var(--surface2);color:var(--accent);border:1px solid var(--border)}
+.btn-sm{background:transparent;border:1px solid var(--muted);color:var(--muted);padding:0.1rem 0.4rem;border-radius:4px;font-size:0.6rem;cursor:pointer;font-family:"IBM Plex Mono",monospace}
 .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
 .controls{padding:0.75rem 1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border)}
 .table-wrap{overflow-x:auto;padding-bottom:2rem}
@@ -1132,9 +1134,9 @@ th{text-align:left;padding:0.45rem 0.9rem;color:var(--muted);font-size:0.58rem;t
 td{padding:0.4rem 0.9rem;border-bottom:1px solid #0f1a28}
 tr:hover td{background:var(--surface)}
 .buy{color:var(--green);font-weight:700}.sell{color:var(--red);font-weight:700}
-.pair-tag{background:#0d1e30;border:1px solid #1a3050;border-radius:4px;padding:0.1rem 0.32rem;font-size:0.64rem;color:var(--accent);cursor:pointer}
-.pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--orange)}.muted{color:var(--muted)}.vol{color:#88aacc}
-.sec-title{font-family:"Syne",sans-serif;font-size:0.9rem;font-weight:700;color:var(--accent);padding:1rem 1.5rem 0.3rem}
+.pair-tag{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:0.1rem 0.32rem;font-size:0.64rem;color:var(--accent);cursor:pointer}
+.pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--orange)}.muted{color:var(--muted)}.vol{color:#b7bdc6}
+.sec-title{font-family:"Sora",sans-serif;font-size:0.9rem;font-weight:700;color:var(--accent);padding:1rem 1.5rem 0.3rem}
 .sec-sub{font-size:0.65rem;color:var(--muted);padding:0 1.5rem 0.75rem;line-height:1.6}
 .analizar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;padding:1.2rem 1.5rem}
 .analizar-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color 0.2s}
@@ -1142,23 +1144,23 @@ tr:hover td{background:var(--surface)}
 .analizar-card.hot{border-color:var(--red)}
 .analizar-card.warm{border-color:var(--orange)}
 .card-header{padding:0.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;flex-wrap:wrap}
-.card-pair{font-family:"Syne",sans-serif;font-size:1.1rem;font-weight:800;color:var(--accent);word-break:break-all}
+.card-pair{font-family:"Sora",sans-serif;font-size:1.1rem;font-weight:800;color:var(--accent);word-break:break-all}
 .card-badges{display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;margin-top:0.4rem}
-.badge{font-size:0.62rem;font-weight:700;padding:0.18rem 0.5rem;border-radius:20px;font-family:"Syne",sans-serif}
-.badge-hot{background:#ff446620;color:var(--red);border:1px solid var(--red)}
-.badge-warm{background:#ffaa0020;color:var(--orange);border:1px solid var(--orange)}
-.badge-count{background:#00d4ff15;color:var(--accent);border:1px solid var(--accent)}
-.badge-side-b{background:#00ff8815;color:var(--green);border:1px solid var(--green)}
-.badge-side-s{background:#ff446615;color:var(--red);border:1px solid var(--red)}
+.badge{font-size:0.62rem;font-weight:700;padding:0.18rem 0.5rem;border-radius:20px;font-family:"Sora",sans-serif}
+.badge-hot{background:rgba(246,70,93,0.13);color:var(--red);border:1px solid var(--red)}
+.badge-warm{background:rgba(240,185,11,0.13);color:var(--orange);border:1px solid var(--orange)}
+.badge-count{background:rgba(252,213,53,0.08);color:var(--accent);border:1px solid var(--accent-dim)}
+.badge-side-b{background:rgba(14,203,129,0.13);color:var(--green);border:1px solid var(--green)}
+.badge-side-s{background:rgba(246,70,93,0.13);color:var(--red);border:1px solid var(--red)}
 .score-big{text-align:center;min-width:56px;padding:0 0.5rem;flex-shrink:0}
-.score-big-num{font-family:"Syne",sans-serif;font-size:1.6rem;font-weight:800;line-height:1}
+.score-big-num{font-family:"Sora",sans-serif;font-size:1.6rem;font-weight:800;line-height:1}
 .score-big-sub{font-size:0.55rem;color:var(--muted);margin-top:0.1rem}
 .score-big-detail{font-size:0.55rem;color:var(--muted)}
 .card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--border)}
 .card-metric{padding:0.6rem 0.8rem;border-right:1px solid var(--border)}
 .card-metric:last-child{border-right:none}
 .card-metric-label{font-size:0.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em}
-.card-metric-value{font-size:0.9rem;font-weight:700;font-family:"Syne",sans-serif;margin-top:0.1rem}
+.card-metric-value{font-size:0.9rem;font-weight:700;font-family:"Sora",sans-serif;margin-top:0.1rem}
 .card-signals{padding:0.6rem 0.8rem;border-bottom:1px solid var(--border)}
 .signal-mini{display:flex;gap:0.6rem;align-items:center;font-size:0.66rem;padding:0.2rem 0;border-bottom:1px solid #0a1520}
 .signal-mini:last-child{border-bottom:none}
@@ -1166,19 +1168,19 @@ tr:hover td{background:var(--surface)}
 .ai-detail-row{display:flex;gap:0.4rem;align-items:flex-start;margin-bottom:0.2rem}
 .ai-label{color:var(--muted);white-space:nowrap;min-width:40px}
 .card-footer{padding:0.6rem 0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap}
-.kraken-btn{display:flex;align-items:center;gap:0.3rem;background:#0a1830;border:1px solid #1a4060;border-radius:6px;padding:0.35rem 0.7rem;font-size:0.65rem;color:var(--accent);text-decoration:none;transition:all 0.2s;font-family:"Space Mono",monospace}
-.kraken-btn:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+.kraken-btn{display:flex;align-items:center;gap:0.3rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.35rem 0.7rem;font-size:0.65rem;color:var(--accent);text-decoration:none;transition:all 0.2s;font-family:"IBM Plex Mono",monospace}
+.kraken-btn:hover{background:var(--accent);color:#0b0e11;border-color:var(--accent);box-shadow:0 0 12px rgba(252,213,53,0.3)}
 .par-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.6rem;margin-bottom:1.2rem}
 .cand-metric{background:#0a1220;border-radius:6px;padding:0.45rem 0.6rem}
 .cand-metric-label{font-size:0.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em}
-.cand-metric-value{font-size:0.85rem;font-weight:700;font-family:"Syne",sans-serif;margin-top:0.1rem}
+.cand-metric-value{font-size:0.85rem;font-weight:700;font-family:"Sora",sans-serif;margin-top:0.1rem}
 .rev-grid{display:grid;grid-template-columns:55px 1fr 48px;gap:0.35rem;align-items:center;margin-bottom:0.35rem;font-size:0.66rem}
 .rev-bar-wrap{background:#0f1a28;border-radius:4px;height:6px;overflow:hidden}
 .rev-bar{height:100%;border-radius:4px}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.4rem;width:93%;max-width:700px;position:relative;max-height:90vh;overflow-y:auto}
-.modal h2{font-family:"Syne",sans-serif;font-size:1rem;color:var(--accent);margin-bottom:0.25rem}
+.modal h2{font-family:"Sora",sans-serif;font-size:1rem;color:var(--accent);margin-bottom:0.25rem}
 .modal-meta{font-size:0.66rem;color:var(--muted);margin-bottom:0.9rem}
 .modal-close{position:absolute;top:0.9rem;right:0.9rem;background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:0.95rem;display:flex;align-items:center;justify-content:center}
 .modal-close:hover{border-color:var(--red);color:var(--red);opacity:1}
@@ -1191,7 +1193,7 @@ tr:hover td{background:var(--surface)}
 </head>
 <body>
 <header>
-  <div><h1>&#x1F40B; Whale Dashboard - Binance</h1><span id="lastUpdate" style="color:var(--muted);font-size:0.68rem">Cargando...</span></div>
+  <div><h1>&#x25C6; Whale Dashboard <span style="color:var(--muted);font-weight:400;font-size:0.9rem">/ Binance</span></h1><span id="lastUpdate" style="color:var(--muted);font-size:0.68rem">Cargando...</span></div>
   <button class="btn-ghost" onclick="loadAll()">&#8635; Actualizar</button>
 </header>
 <div class="stats" id="stats"></div>
@@ -1277,9 +1279,9 @@ tr:hover td{background:var(--surface)}
 <div class="tab-content" id="tab-export">
   <div class="sec-title">&#x1F4E5; Exportar</div>
   <div class="export-grid">
-    <div class="export-card"><div style="color:var(--accent);font-family:Syne,sans-serif;font-size:0.78rem;font-weight:700">Señales</div><p>Todas las señales con par, lado, precio y volumen.</p><button class="btn-export" onclick="exportCSV('signals')">&#x2B07; Descargar</button></div>
-    <div class="export-card"><div style="color:var(--accent);font-family:Syne,sans-serif;font-size:0.78rem;font-weight:700">Mechazos</div><p>Señales con porcentaje de reversion a 1h, 4h y 24h.</p><button class="btn-export" onclick="exportCSV('mechazos')">&#x2B07; Descargar</button></div>
-    <div class="export-card"><div style="color:var(--accent);font-family:Syne,sans-serif;font-size:0.78rem;font-weight:700">Win Rate</div><p>Ranking de pares por porcentaje de señales positivas.</p><button class="btn-export" onclick="exportCSV('winrate')">&#x2B07; Descargar</button></div>
+    <div class="export-card"><div style="color:var(--accent);font-family:Sora,sans-serif;font-size:0.78rem;font-weight:700">Señales</div><p>Todas las señales con par, lado, precio y volumen.</p><button class="btn-export" onclick="exportCSV('signals')">&#x2B07; Descargar</button></div>
+    <div class="export-card"><div style="color:var(--accent);font-family:Sora,sans-serif;font-size:0.78rem;font-weight:700">Mechazos</div><p>Señales con porcentaje de reversion a 1h, 4h y 24h.</p><button class="btn-export" onclick="exportCSV('mechazos')">&#x2B07; Descargar</button></div>
+    <div class="export-card"><div style="color:var(--accent);font-family:Sora,sans-serif;font-size:0.78rem;font-weight:700">Win Rate</div><p>Ranking de pares por porcentaje de señales positivas.</p><button class="btn-export" onclick="exportCSV('winrate')">&#x2B07; Descargar</button></div>
   </div>
 </div>
 
@@ -1498,7 +1500,7 @@ async function loadAnalizar() {
     html += revHtml;
     html += '<div class="card-footer">';
     html += '<a href="' + kUrl + '" target="_blank" class="kraken-btn">Binance</a>';
-    html += '<a href="' + g.cmc_url + '" target="_blank" class="kraken-btn" style="background:#0d1f3c;border-color:#1a4080">CoinGecko</a>';
+    html += '<a href="' + g.cmc_url + '" target="_blank" class="kraken-btn" style="background:var(--surface);border-color:var(--border)">CoinGecko</a>';
     html += '<button class="btn-sm" data-pair="' + g.pair.replace(/"/g, '') + '" onclick="goToPar(this.dataset.pair)">Historial</button>';
     html += '</div></div>';
   });
@@ -1578,7 +1580,7 @@ async function loadResultados() {
     var gc = barColor(data.acierto_global);
     html += '<div style="text-align:center;margin-bottom:1.5rem;padding:1.2rem;background:var(--surface);border:1px solid var(--border);border-radius:10px">';
     html += '<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Acierto Global</div>';
-    html += '<div style="font-family:Syne,sans-serif;font-size:3rem;font-weight:800;color:' + gc + ';line-height:1.1">' + data.acierto_global + '%</div>';
+    html += '<div style="font-family:Sora,sans-serif;font-size:3rem;font-weight:800;color:' + gc + ';line-height:1.1">' + data.acierto_global + '%</div>';
     html += '<div style="font-size:0.65rem;color:var(--muted)">' + data.total + ' predicciones evaluadas · ' + data.pendientes + ' pendientes</div>';
     html += '</div>';
     if (data.por_direccion && data.por_direccion.length) html += bloque('Por dirección', data.por_direccion, 'direccion');
@@ -1644,8 +1646,8 @@ async function openChart(signalId, pair, side, entryPrice) {
   var pts = data.tracking; var sig = data.signal;
   document.getElementById('modal-meta').textContent = (sig.side === 'b' ? 'BUY' : 'SELL') + ' | Entrada: ' + parseFloat(sig.price_to).toPrecision(5) + ' | Vol: ' + fmt(sig.volume_eur) + '$ | ' + sig.timestamp.substring(0, 19);
   if (!pts || pts.length === 0) { document.getElementById('no-data').style.display = 'block'; document.getElementById('priceChart').style.display = 'none'; return; }
-  var color = pts[pts.length-1].pct_change >= 0 ? '#00ff88' : '#ff4466';
-  chartInstance = new Chart(document.getElementById('priceChart'), {type:'line',data:{labels:pts.map(function(p){return '+'+p.minutes+'min';}),datasets:[{label:'Precio',data:pts.map(function(p){return p.price;}),borderColor:color,backgroundColor:color+'15',borderWidth:2,pointRadius:0,tension:0.3,fill:true,yAxisID:'y'},{label:'% cambio',data:pts.map(function(p){return p.pct_change;}),borderColor:'#00d4ff',borderWidth:1,borderDash:[4,4],pointRadius:0,tension:0.3,fill:false,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#4a6080',font:{family:'Space Mono',size:10}}},tooltip:{backgroundColor:'#0d1420',borderColor:'#1a2535',borderWidth:1,titleColor:'#c8d8e8',bodyColor:'#c8d8e8'}},scales:{x:{ticks:{color:'#4a6080',font:{size:9},maxTicksLimit:12},grid:{color:'#0f1a28'}},y:{ticks:{color:'#00ff88',font:{size:9}},grid:{color:'#0f1a28'},position:'left'},y2:{ticks:{color:'#00d4ff',font:{size:9}},grid:{display:false},position:'right'}}}});
+  var color = pts[pts.length-1].pct_change >= 0 ? '#0ecb81' : '#f6465d';
+  chartInstance = new Chart(document.getElementById('priceChart'), {type:'line',data:{labels:pts.map(function(p){return '+'+p.minutes+'min';}),datasets:[{label:'Precio',data:pts.map(function(p){return p.price;}),borderColor:color,backgroundColor:color+'15',borderWidth:2,pointRadius:0,tension:0.3,fill:true,yAxisID:'y'},{label:'% cambio',data:pts.map(function(p){return p.pct_change;}),borderColor:'#fcd535',borderWidth:1,borderDash:[4,4],pointRadius:0,tension:0.3,fill:false,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#848e9c',font:{family:'IBM Plex Mono',size:10}}},tooltip:{backgroundColor:'#181a20',borderColor:'#2b3139',borderWidth:1,titleColor:'#eaecef',bodyColor:'#eaecef'}},scales:{x:{ticks:{color:'#848e9c',font:{size:9},maxTicksLimit:12},grid:{color:'#1e2329'}},y:{ticks:{color:'#0ecb81',font:{size:9}},grid:{color:'#1e2329'},position:'left'},y2:{ticks:{color:'#fcd535',font:{size:9}},grid:{display:false},position:'right'}}}});
 }
 
 function closeModal() {
