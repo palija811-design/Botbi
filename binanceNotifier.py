@@ -2126,38 +2126,36 @@ _trade_buffer = {}       # symbol -> list of (price, qty, time, side)
 _buffer_lock = threading.Lock()
 _last_price = {}         # symbol -> ultimo precio visto
 
-# Umbral de importe para considerar una operación como ballena (USD)
-BALLENA_MIN_USD = 50000   # operación individual mínima para ser ballena
-# Historial de precio para calcular el movimiento reciente (% en ventana corta)
+# ─── Filtros de detección de ballena ───
+BALLENA_MIN_USD = 15000   # operación individual mínima (USD)
+BALLENA_MIN_PCT = 1.0     # movimiento mínimo del precio en la ventana (%)
+_PRICE_WINDOW_MS = 5 * 60 * 1000  # ventana de 5 min para medir el movimiento
 _price_history = {}        # symbol -> list of (ts_ms, precio)
-_PRICE_WINDOW_MS = 5 * 60 * 1000  # 5 minutos
 
 def procesar_trade(symbol, precio, cantidad, es_venta, ts_ms):
-    """Detecta ballenas por IMPORTE de la operación individual (Opción A).
-    Una operación >= BALLENA_MIN_USD es una ballena. El % de movimiento se calcula
-    sobre los últimos 5 min solo para contexto del mensaje, no como filtro."""
+    """Detecta ballenas: operación grande (>= BALLENA_MIN_USD) Y que el precio
+    se haya movido >= BALLENA_MIN_PCT en los últimos 5 min. Combina importe + movimiento."""
     pair = _symbol_to_pair.get(symbol, symbol_to_pair(symbol))
     usd = precio * cantidad
     side = "s" if es_venta else "b"
 
-    # Mantener historial de precios de los últimos 5 min para calcular el movimiento
+    # Mantener historial de precios de los últimos 5 min
     with _buffer_lock:
         hist = _price_history.setdefault(symbol, [])
         hist.append((ts_ms, precio))
-        # Limpiar lo más viejo que 5 min
         corte = ts_ms - _PRICE_WINDOW_MS
         while hist and hist[0][0] < corte:
             hist.pop(0)
         precio_ventana = hist[0][1] if hist else precio
 
-    # Movimiento del precio en la ventana de 5 min (solo contexto, no filtro)
+    # Movimiento del precio en la ventana de 5 min
     if precio_ventana and precio_ventana > 0:
         priceDiff = abs((precio - precio_ventana) * 100 / precio_ventana)
     else:
         priceDiff = 0.0
 
-    # FILTRO PRINCIPAL: la operación individual supera el umbral de ballena
-    if usd >= BALLENA_MIN_USD:
+    # FILTRO: operación grande Y movimiento significativo del precio
+    if usd >= BALLENA_MIN_USD and priceDiff >= BALLENA_MIN_PCT:
         priceDiff = round(priceDiff, 3)
         print(f"\U0001F433 [BINANCE] {priceDiff}% {pair} {usd:,.0f}USD")
         # Construir un tradeDF mínimo compatible con el resto del código
